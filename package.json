@@ -4,7 +4,7 @@
   "description": "",
   "homepage": "https://mantr88.github.io/goit-js-hw-11",
   "scripts": {
-    "start": "parcel src/*.html",
+    "start": "parcel src/*.html -p 2222 --open",
     "build": "parcel build src/*.html --public-url /goit-js-hw-11/"
   },
   "repository": {
@@ -18,7 +18,8 @@
     "url": "https://github.com/mantr88/goit-js-hw-11/issues"
   },
   "dependencies": {
-    "modern-normalize": "^1.1.0"
+    "modern-normalize": "^1.1.0",
+    "notiflix": "^3.2.6"
   },
   "devDependencies": {
     "@parcel/transformer-sass": "^2.6.0",
