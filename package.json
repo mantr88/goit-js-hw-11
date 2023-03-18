@@ -4,7 +4,7 @@
   "description": "",
   "homepage": "https://mantr88.github.io/goit-js-hw-11",
   "scripts": {
-    "start": "parcel src/*.html -p 2222 --open",
+    "start": "parcel src/*.html",
     "build": "parcel build src/*.html --public-url /goit-js-hw-11/"
   },
   "repository": {
@@ -12,7 +12,7 @@
     "url": "git+https://github.com/mantr88/goit-js-hw-11.git"
   },
   "keywords": [],
-  "author": "Alexander Repeta <alexander.repeta@gmail.com>",
+  "author": "Anton Petrenko <paa2017sh@gmail.com>",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/mantr88/goit-js-hw-11/issues"
