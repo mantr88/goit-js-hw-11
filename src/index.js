@@ -13,6 +13,10 @@ const refs = {
     loadMore: document.querySelector('.load-more'),
 };
 
+const showBtnLoadMore = () => {
+    refs.loadMore.classList.remove("is-hidden");
+};
+
 const render = () => {
     const galleryMarkup = items.map(({ likes, views, comments, downloads, tags, webformatURL }) => `
         <div class="photo-card">
@@ -38,12 +42,15 @@ const render = () => {
     </div>
     `);
 
-    if (!page) {
+    if (page === 1) {
         refs.gallery.innerHTML = '';
     };
 
     refs.gallery.insertAdjacentHTML('beforeend', galleryMarkup);
-
+    showBtnLoadMore();
+    if (items.length < HITS_PER_PAGE) {
+        refs.loadMore.classList.add("is-hidden");
+    }
 };
 
 const showBadQueryMsg = () => {
@@ -52,19 +59,32 @@ const showBadQueryMsg = () => {
 
 const queryHandler = (e) => {
     e.preventDefault();
-    console.dir(e.target[0].value);
+    const { value } = e.target.elements.searchQuery;
 
-    query = (e.target[0].value).trim();
-    if (query === '') return;
+    if (query === value || !value) {
+        return;
+    };
+
+    query = value.trim();
+
+    if (query === '') {
+        return;
+    };
+
+    page = 1;
     goFetch(query);
 };
 
 const goFetch = async (query) => {
     const response = await fetch(`https://pixabay.com/api/?key=${KEY}&q=${query}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=${HITS_PER_PAGE}`);
     const photos = await response.json();
-    console.log(photos);
     if (photos.hits.length === 0) {
         showBadQueryMsg();
+    };
+
+    if (photos.hits.length < HITS_PER_PAGE) {
+        // refs.loadMore.classList.add("is-hidden");
+        Notify.info("We're sorry, but you've reached the end of search results.");
     }
 
     items = photos.hits;
@@ -73,8 +93,9 @@ const goFetch = async (query) => {
 
 const loadMoreHandler = () => {
     page += 1;
-    goFetch();
+    goFetch(query);
 };
+// dogs and white cats
 
 refs.form.addEventListener('submit', queryHandler);
 refs.loadMore.addEventListener('click', loadMoreHandler);
