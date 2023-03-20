@@ -1,16 +1,18 @@
+// імпорт бібліотеки Notify
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
+// імпорт бібліотеки SimpleLightbox
 import SimpleLightbox from "simplelightbox";
 // Додатковий імпорт стилів
 import "simplelightbox/dist/simple-lightbox.min.css";
 
-const KEY = '34533361-52f77fc65512da5c1ec10b6c5';
+import { apiFetch } from './js/api';
+
 const HITS_PER_PAGE = 40;
 let page = 1;
 let items = [];
 let query = '';
 
 const refs = {
-    // button: document.addEventListener('button'),
     form: document.querySelector('.search-form'),
     gallery: document.querySelector('.gallery'),
     loadMore: document.querySelector('.load-more'),
@@ -19,6 +21,18 @@ const refs = {
 const showBtnLoadMore = () => {
     refs.loadMore.classList.remove("is-hidden");
 };
+
+const showBadQueryMsg = () => {
+    Notify.failure("Sorry, there are no images matching your search query. Please try again.");
+};
+
+const showSuccessMsg = (totalHits) => {
+    // Після першого запиту з кожним новим пошуком показуємо повідомлення
+    if (page === 1) {
+        Notify.success(`Hooray! We found ${totalHits} images.`);
+    };
+};
+
 
 const render = () => {
     const galleryMarkup = items.map(({ likes, views, comments, downloads, tags, webformatURL, largeImageURL }) => `
@@ -47,32 +61,34 @@ const render = () => {
     </a>
     `);
 
+    // очищаємо сторінку при кожному новому запиті
     if (page === 1) {
-        refs.gallery.innerHTML = '';
+        refs.gallery.innerHTML = ''; 
     };
 
     refs.gallery.insertAdjacentHTML('beforeend', galleryMarkup);
+    // оновлюємо сторінку при завантаженні нової сторінки з даними
     simpleLightbox.refresh();
+    // показуємо кнопку Load More при новому запиті
     showBtnLoadMore();
+    // ховаємо кнопку Load More на останній сторінці з даними
     if (items.length < HITS_PER_PAGE) {
         refs.loadMore.classList.add("is-hidden");
-    }
+    };
 };
 
+// запускаємо бібліотеку SimpleLightbox
 let  simpleLightbox = new SimpleLightbox('.gallery a', {
   captionsData: "alt",
     captionDelay: 250,
 });
 
-
-const showBadQueryMsg = () => {
-    Notify.failure("Sorry, there are no images matching your search query. Please try again.");
-};
-
 const queryHandler = (e) => {
     e.preventDefault();
+    // отримуємо строку запита
     const { value } = e.target.elements.searchQuery;
-
+    // якщо запит введено вперше та поле запиту не порожшнє,
+    // то записуємо строку запиту в змінну
     if (query === value || !value) {
         return;
     };
@@ -82,34 +98,42 @@ const queryHandler = (e) => {
     if (query === '') {
         return;
     };
-
+    // для отримання першої сторінки отриманих данних від АРІ    
     page = 1;
-    goFetch(query);
+    // викликаємо функцію обробки пошуку данних по запиту в АРІ
+    searchPhoto(query, page);
 };
 
-const goFetch = async (query) => {
-    const response = await fetch(`https://pixabay.com/api/?key=${KEY}&q=${query}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=${HITS_PER_PAGE}`);
-    const data = await response.json();
+const searchPhoto = async (query, page) => {
+    try {
+        // передаємо необхідні аргументи та викликаємо функцію запиту данних по запиту в АРІ
+        const response = await apiFetch(query, page, HITS_PER_PAGE);
+        // реструктуризація даних для подальшого використання
+        const { data } = response;
+        // Якщо користувач дійшов до кінця колекції виводемо повідомлення
+        if (data.hits.length < HITS_PER_PAGE) {
+        Notify.info("We're sorry, but you've reached the end of search results.");
+        };
+    
+        items = data.hits;
+        render();
+        // Після першого запиту з кожним новим пошуком виводимо повідомлення
+        if (page === 1) {    
+            showSuccessMsg(data.totalHits);
+        };
+    } catch (error) {
+        console.log(error);
+    };
+    // виводимо сповіщення нічого підходящого не було знайдено
     if (data.hits.length === 0) {
         showBadQueryMsg();
-    };
-
-    if (data.hits.length < HITS_PER_PAGE) {
-        Notify.info("We're sorry, but you've reached the end of search results.");
-    };
-
-    
-    items = data.hits;
-    render();
-    Notify.success(`Hooray! We found ${data.totalHits} images.`);
-    
+    }; 
 };
 
 const loadMoreHandler = () => {
     page += 1;
-    goFetch(query);
+    searchPhoto(query, page);
 };
-// dogs and white cats
 
 refs.form.addEventListener('submit', queryHandler);
 refs.loadMore.addEventListener('click', loadMoreHandler);
