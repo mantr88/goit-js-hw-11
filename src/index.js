@@ -69,7 +69,6 @@ const render = () => {
     refs.gallery.insertAdjacentHTML('beforeend', galleryMarkup);
     // оновлюємо сторінку при завантаженні нової сторінки з даними
     simpleLightbox.refresh();
-    scrollPage();
     // показуємо кнопку Load More при новому запиті
     showBtnLoadMore();
     // ховаємо кнопку Load More на останній сторінці з даними
@@ -122,13 +121,15 @@ const searchPhoto = async (query, page) => {
         if (page === 1) {    
             showSuccessMsg(data.totalHits);
         };
+
+         // виводимо сповіщення нічого підходящого не було знайдено
+        if (data.hits.length === 0) {
+            showBadQueryMsg();
+        }; 
     } catch (error) {
         console.log(error);
     };
-    // виводимо сповіщення нічого підходящого не було знайдено
-    if (data.hits.length === 0) {
-        showBadQueryMsg();
-    }; 
+   
 };
 
 const loadMoreHandler = () => {
@@ -136,19 +137,6 @@ const loadMoreHandler = () => {
     searchPhoto(query, page);
     
 };
-
-//  плавне прокручування сторінки після запиту і
-//  відтворення кожної наступної групи зображень
-function scrollPage() {
-  const { height: cardHeight } = document
-    .querySelector('.gallery')
-    .firstElementChild.getBoundingClientRect();
-
-  window.scrollBy({
-    top: cardHeight * 2,
-    behavior: 'smooth',
-  });
-}
 
 refs.form.addEventListener('submit', queryHandler);
 refs.loadMore.addEventListener('click', loadMoreHandler);
